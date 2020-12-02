@@ -1,26 +1,39 @@
 const fs = require("fs");
 const  uuidv1 = require("uuidv1");
+const util = require("util");
 
 class noteOp {
-    read(){
-        return fs.readFileSync("db/db.json", "utf8");
+    read() {
+        return fs.readFileSync("db/db.json", "utf8", function(err, data){
+        if (err) console.log(err);
+        });
     }
-//fs.writeFile
-    write() {
-        return fs.writeFileSync("d")
-    }
-//addNote(argument will be note data - req.body in api routes file)
-/*
-for add first get all notes using getNote function and .then will be getting notes, add new note and write it back to db.json file
-*/
 
-//deleteNote(argument will be an id - req.paramas.id in api routes file)
+    write(note) {
+        return fs.writeFileSync("db/db.json", JSON.stringify(note));
+    }
+
     getNote(){
-        return this.read().then((notes) => {
-            let parsedNoteData = JSON.parse(notes); 
+        var notes = this.read() 
+        let parsedNoteData = [].concat(JSON.parse(notes)); 
+        return parsedNoteData;
+    }
+ 
+    addNote(note){
+        const { title, body } = note;
+ 
+        const temp = {title, body, id: uuidv1()};
 
-            return parsedNoteData;
-        })
+        return this.getNote()
+        .then((n) => [...n, temp])
+        .then((newNote) => this.write(newNote))
+        .then(() => temp);
+    }
+
+    deleteNote(id) {
+        return this.getNote()
+        .then((n) => n.filter((note) => note.id !== id))
+        .then((filteredNotes) => this.write(filteredNotes));
     }
 }
 
